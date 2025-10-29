@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>SCHEDULE</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+<style>
+body {
+  margin:0;
+  background:#0a1a2f;
+  color:#e0f7ff;
+  font-family:'Nunito', sans-serif;
+  overflow:hidden;
+}
+header {
+  text-align:center;
+  padding:10px;
+  font-size:2em;
+  color:#a8d0e6;
+  border-bottom:2px solid #1f2f4f;
+}
+#clock {
+  position:absolute;
+  top:10px;
+  right:20px;
+  font-size:1.5em;
+}
+table {
+  width:100%;
+  border-collapse: collapse;
+  margin-top:10px;
+}
+th, td {
+  padding:10px;
+  text-align:left;
+}
+th {
+  font-size:1.2em;
+  border-bottom:2px solid #1f2f4f;
+}
+td {
+  font-size:1.1em;
+  border-bottom:1px solid #1f2f4f;
+}
+.logoCell img {
+  max-height:50px;
+  max-width:100px;
+}
+.flip {
+  animation: flipAnim 0.5s ease;
+}
+@keyframes flipAnim {
+  0% { opacity:0; transform: rotateX(90deg);}
+  100% { opacity:1; transform: rotateX(0deg);}
+}
+td.status[data-status="Boarding"] { color:#ffe066; }
+td.status[data-status="Delayed"] { color:#ff6b6b; }
+td.status[data-status="Departed"] { color:#999; }
+td.status[data-status="On Time"] { color:#51cf66; }
+</style>
+</head>
+<body>
+<header>SCHEDULE</header>
+<div id="clock"></div>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Čas</th>
+<th>Let</th>
+<th>Destinace</th>
+<th>Brána</th>
+<th>CPT</th>
+<th>FO</th>
+<th>Training</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<script>
+let flights=[];
+let soundFlip=false;
+let currentIndex=0;
+const visibleRows=8;
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString();
+}
+setInterval(updateClock,1000);
+
+function playStatusSound(status){
+  let sound;
+  if(status === "Boarding") sound = new Audio("boarding.mp3");
+  else if(status === "Delayed") sound = new Audio("delayed.mp3");
+  if(sound) sound.play();
+}
+
+function renderBoard(){
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  if(flights.length===0) return;
+  const rows=flights.slice(currentIndex,currentIndex+visibleRows);
+  rows.forEach(f=>{
+    const tr=document.createElement('tr');
+    const logoTd=document.createElement('td'); logoTd.className='logoCell';
+    if(f.logoUrl){ const img=document.createElement('img'); img.src=f.logoUrl; logoTd.appendChild(img);}
+    tr.appendChild(logoTd);
+    ['time','code','dest','gate','cpt','fo','training'].forEach(field=>{
+      const td=document.createElement('td');
+      td.textContent=f[field];
+      td.classList.add('flip');
+      tr.appendChild(td);
+    });
+    const statusTd=document.createElement('td');
+    statusTd.textContent=f.status;
+    statusTd.className='status flip';
+    statusTd.setAttribute('data-status',f.status);
+    tr.appendChild(statusTd);
+    tbody.appendChild(tr);
+    if(soundFlip) playStatusSound(f.status);
+  });
+  if(soundFlip){
+    const flipSound=new Audio("flip.mp3");
+    flipSound.play();
+  }
+}
+
+function rotateFlights(){
+  if(flights.length>visibleRows){
+    currentIndex=(currentIndex+visibleRows)%flights.length;
+    renderBoard();
+  }
+}
+setInterval(rotateFlights,5000);
+
+window.addEventListener('message',e=>{
+  if(e.data.type==='update'){
+    flights=e.data.flights.map(f=>({...f}));
+    soundFlip=e.data.soundFlip;
+    currentIndex=0;
+    renderBoard();
+  }
+});
+</script>
+</body>
+</html>
