@@ -3,26 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin – Přidat let</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    input, button { margin: 5px 0; padding: 8px; width: 100%; }
-    form { max-width: 400px; margin: auto; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #005f99;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    button {
+      background: #005f99;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #004b7a;
+    }
   </style>
 </head>
 <body>
-  <h1>Admin – Přidat let</h1>
-  <form id="flightForm">
-    <input id="logoUrl" placeholder="Logo URL">
-    <input id="time" placeholder="Čas">
-    <input id="code" placeholder="Let">
-    <input id="dest" placeholder="Destinace">
-    <input id="gate" placeholder="Brána">
-    <input id="cpt" placeholder="CPT">
-    <input id="fo" placeholder="FO">
-    <input id="training" placeholder="Training">
-    <input id="status" placeholder="Status">
-    <button type="submit">Přidat let</button>
-  </form>
+  <div class="container">
+    <h1>Přidat let</h1>
+    <form id="flightForm">
+      <input id="logoUrl" placeholder="Logo URL">
+      <input id="time" placeholder="Čas">
+      <input id="code" placeholder="Let">
+      <input id="dest" placeholder="Destinace">
+      <input id="gate" placeholder="Brána">
+      <input id="cpt" placeholder="CPT">
+      <input id="fo" placeholder="FO">
+      <input id="training" placeholder="Training">
+      <input id="status" placeholder="Status">
+      <button type="submit">Přidat let</button>
+    </form>
+  </div>
 
   <script>
     const form = document.getElementById('flightForm');
