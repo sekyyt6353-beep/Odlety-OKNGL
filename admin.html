@@ -1,91 +1,154 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin – Přidat let</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f8;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 100%;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #005f99;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 1em;
-    }
-    button {
-      background: #005f99;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #004b7a;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>ADMIN – SCHEDULE</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+<style>
+body { margin:0; font-family:'Nunito',sans-serif; background:#0a1a2f; color:#e0f7ff; }
+#container { max-width:900px; margin:auto; padding:20px; }
+h2 { text-align:center; color:#a8d0e6; border-bottom:2px solid #1f2f4f; padding-bottom:10px; }
+input, select, button, textarea {
+  margin:4px 0; padding:6px; font-size:1em;
+  background:#112a45; color:#e0f7ff; border:1px solid #355c7d;
+}
+ul { list-style:none; padding:0; }
+li {
+  padding:6px 0; border-bottom:1px solid #1f2f4f;
+  display:flex; flex-wrap:wrap; gap:5px; align-items:center;
+}
+li input, li select { flex:1; min-width:80px; }
+li button {
+  padding:4px 8px; cursor:pointer;
+  background:#1f2f4f; color:#a8d0e6; border:1px solid #355c7d;
+}
+label { display:block; margin-top:10px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Přidat let</h1>
-    <form id="flightForm">
-      <input id="logoUrl" placeholder="Logo URL">
-      <input id="time" placeholder="Čas">
-      <input id="code" placeholder="Let">
-      <input id="dest" placeholder="Destinace">
-      <input id="gate" placeholder="Brána">
-      <input id="cpt" placeholder="CPT">
-      <input id="fo" placeholder="FO">
-      <input id="training" placeholder="Training">
-      <input id="status" placeholder="Status">
-      <button type="submit">Přidat let</button>
-    </form>
-  </div>
+<div id="container">
+<h2>ADMIN – SCHEDULE</h2>
 
-  <script>
-    const form = document.getElementById('flightForm');
+<input id="code" placeholder="Kód letu">
+<input id="dest" placeholder="Destinace">
+<input id="time" type="time">
+<input id="gate" placeholder="Brána">
+<select id="status">
+  <option>On Time</option>
+  <option>Delayed</option>
+  <option>Boarding</option>
+  <option>Departed</option>
+  <option>Zrušeno</option>
+</select>
+<input id="cpt" placeholder="Captain">
+<input id="fo" placeholder="First Officer">
+<select id="training">
+  <option>Ne</option>
+  <option>Ano</option>
+</select>
+<input id="logoUrl" placeholder="Logo URL">
+<input type="file" id="logoFile" accept="image/*">
+<textarea id="announcement" placeholder="Text hlášení" rows="2"></textarea>
+<input type="file" id="announcementFile" accept=".mp3">
+<label><input type="checkbox" id="soundFlip"> Zvuk překlápění + status</label>
+<button id="add">Přidat let</button>
+<button id="clear">Vymazat vše</button>
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const flight = {
-        logoUrl: document.getElementById('logoUrl').value,
-        time: document.getElementById('time').value,
-        code: document.getElementById('code').value,
-        dest: document.getElementById('dest').value,
-        gate: document.getElementById('gate').value,
-        cpt: document.getElementById('cpt').value,
-        fo: document.getElementById('fo').value,
-        training: document.getElementById('training').value,
-        status: document.getElementById('status').value
-      };
+<h3>Aktuální lety</h3>
+<ul id="list"></ul>
+</div>
 
-      const flights = JSON.parse(localStorage.getItem('flights') || '[]');
-      flights.push(flight);
-      localStorage.setItem('flights', JSON.stringify(flights));
-      alert('Let přidán!');
-      form.reset();
-    });
-  </script>
+<script>
+let flights = JSON.parse(localStorage.getItem('flights') || '[]');
+
+function renderList(){
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  flights.forEach((f,i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <input value="${f.code}" onchange="flights[${i}].code=this.value; save();">
+      <input value="${f.dest}" onchange="flights[${i}].dest=this.value; save();">
+      <input type="time" value="${f.time}" onchange="flights[${i}].time=this.value; save();">
+      <input value="${f.gate}" onchange="flights[${i}].gate=this.value; save();">
+      <select onchange="flights[${i}].status=this.value; save();">
+        <option ${f.status==='On Time'?'selected':''}>On Time</option>
+        <option ${f.status==='Delayed'?'selected':''}>Delayed</option>
+        <option ${f.status==='Boarding'?'selected':''}>Boarding</option>
+        <option ${f.status==='Departed'?'selected':''}>Departed</option>
+        <option ${f.status==='Zrušeno'?'selected':''}>Zrušeno</option>
+      </select>
+      <input value="${f.cpt}" onchange="flights[${i}].cpt=this.value; save();">
+      <input value="${f.fo}" onchange="flights[${i}].fo=this.value; save();">
+      <select onchange="flights[${i}].training=this.value; save();">
+        <option ${f.training==='Ne'?'selected':''}>Ne</option>
+        <option ${f.training==='Ano'?'selected':''}>Ano</option>
+      </select>
+      <button onclick="save()">Uložit</button>
+      <button onclick="flights.splice(${i},1); save();">Smazat</button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function save(){
+  localStorage.setItem('flights', JSON.stringify(flights));
+  renderList();
+}
+
+document.getElementById('add').onclick = () => {
+  const f = {
+    code: code.value,
+    dest: dest.value,
+    time: time.value,
+    gate: gate.value,
+    status: status.value,
+    cpt: cpt.value,
+    fo: fo.value,
+    training: training.value,
+    logoUrl: logoUrl.value,
+    announcementText: announcement.value,
+    announcementFile: null
+  };
+
+  flights.push(f);
+  save();
+
+  const logoFile = logoFile.files[0];
+  if (logoFile){
+    const reader = new FileReader();
+    reader.onload = e => {
+      f.logoUrl = e.target.result;
+      save();
+    };
+    reader.readAsDataURL(logoFile);
+  }
+
+  const annFile = announcementFile.files[0];
+  if (annFile){
+    const reader = new FileReader();
+    reader.onload = e => {
+      f.announcementFile = e.target.result;
+      save();
+    };
+    reader.readAsDataURL(annFile);
+  }
+
+  code.value = dest.value = time.value = gate.value = cpt.value = fo.value = logoUrl.value = announcement.value = '';
+  status.value = 'On Time';
+  training.value = 'Ne';
+  logoFile.value = '';
+  announcementFile.value = '';
+};
+
+document.getElementById('clear').onclick = () => {
+  if (confirm('Opravdu vymazat všechny lety?')){
+    flights = [];
+    save();
+  }
+};
+
+renderList();
+</script>
 </body>
 </html>
