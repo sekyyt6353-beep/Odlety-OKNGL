@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>ADMIN – SCHEDULE</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+<style>
+body {
+  margin:0;
+  font-family: 'Nunito', sans-serif;
+  background:#0a1a2f;
+  color:#e0f7ff;
+}
+#container {
+  width:100%;
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+h2 {
+  text-align:center;
+  color:#a8d0e6;
+  border-bottom:2px solid #1f2f4f;
+  padding-bottom:10px;
+}
+input, select, button, textarea {
+  margin:4px 0;
+  padding:6px;
+  font-size:1em;
+  background:#112a45;
+  color:#e0f7ff;
+  border:1px solid #355c7d;
+}
+ul {
+  list-style:none;
+  padding:0;
+}
+li {
+  padding:6px 0;
+  border-bottom:1px solid #1f2f4f;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  align-items:center;
+}
+li input, li select {
+  width:auto;
+  flex:1;
+  min-width:80px;
+}
+li button {
+  padding:4px 8px;
+  cursor:pointer;
+  background:#1f2f4f;
+  color:#a8d0e6;
+  border:1px solid #355c7d;
+}
+label {
+  display:block;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+<div id="container">
+<h2>ADMIN – SCHEDULE</h2>
+
+<input id="code" placeholder="Kód letu">
+<input id="dest" placeholder="Destinace">
+<input id="time" type="time" placeholder="Čas odletu">
+<input id="gate" placeholder="Brána">
+<select id="status">
+<option value="On Time">On Time</option>
+<option value="Delayed">Delayed</option>
+<option value="Boarding">Boarding</option>
+<option value="Departed">Departed</option>
+</select>
+<input id="cpt" placeholder="Captain">
+<input id="fo" placeholder="First Officer">
+<select id="training">
+  <option value="Ne">Ne</option>
+  <option value="Ano">Ano</option>
+</select>
+<input id="logoUrl" placeholder="Logo URL (nebo nech prázdné)">
+<input type="file" id="logoFile" accept="image/*">
+<textarea id="announcement" placeholder="Text hlášení (nebo nahraj mp3)" rows="2"></textarea>
+<input type="file" id="announcementFile" accept=".mp3">
+<label><input type="checkbox" id="soundFlip"> Zvuk překlápění + status</label>
+<button id="add">Přidat let</button>
+<button id="clear">Vymazat vše</button>
+<button id="openBoard">Otevřít tabuli</button>
+
+<h3>Aktuální lety</h3>
+<ul id="list"></ul>
+</div>
+
+<script>
+let flights = JSON.parse(localStorage.getItem('flights')||'[]');
+let boardWin = null;
+
+function renderList(){
+  const list=document.getElementById('list');
+  list.innerHTML='';
+  flights.forEach((f,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML = `
+      <input value="${f.code}" onchange="flights[${i}].code=this.value; saveAndRender();">
+      <input value="${f.dest}" onchange="flights[${i}].dest=this.value; saveAndRender();">
+      <input type="time" value="${f.time}" onchange="flights[${i}].time=this.value; saveAndRender();">
+      <input value="${f.gate}" onchange="flights[${i}].gate=this.value; saveAndRender();">
+      <select onchange="flights[${i}].status=this.value; saveAndRender();">
+        <option ${f.status==='On Time'?'selected':''}>On Time</option>
+        <option ${f.status==='Delayed'?'selected':''}>Delayed</option>
+        <option ${f.status==='Boarding'?'selected':''}>Boarding</option>
+        <option ${f.status==='Departed'?'selected':''}>Departed</option>
+      </select>
+      <input value="${f.cpt}" onchange="flights[${i}].cpt=this.value; saveAndRender();">
+      <input value="${f.fo}" onchange="flights[${i}].fo=this.value; saveAndRender();">
+      <select onchange="flights[${i}].training=this.value; saveAndRender();">
+        <option ${f.training==='Ne'?'selected':''}>Ne</option>
+        <option ${f.training==='Ano'?'selected':''}>Ano</option>
+      </select>
+      <button onclick="saveAndRender()">Uložit</button>
+      <button onclick="flights.splice(${i},1); saveAndRender()">Smazat</button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function saveAndRender(){
+  localStorage.setItem('flights',JSON.stringify(flights));
+  renderList();
+  updateBoard();
+}
+
+function updateBoard(){
+  if(boardWin && !boardWin.closed){
+    boardWin.postMessage({type:'update', flights, soundFlip:document.getElementById('soundFlip').checked}, '*');
+  }
+}
+
+document.getElementById('add').onclick=()=>{
+  const fileLogo=document.getElementById('logoFile').files[0];
+  const fileAnn=document.getElementById('announcementFile').files[0];
+
+  const f={
+    time: document.getElementById('time').value,
+    code: document.getElementById('code').value,
+    dest: document.getElementById('dest').value,
+    gate: document.getElementById('gate').value,
+    status: document.getElementById('status').value,
+    cpt: document.getElementById('cpt').value,
+    fo: document.getElementById('fo').value,
+    training: document.getElementById('training').value,
+    logoUrl: document.getElementById('logoUrl').value,
+    announcementText: document.getElementById('announcement').value,
+    announcementFile: null
+  };
+
+  if(fileLogo){
+    const reader=new FileReader();
+    reader.onload=function(e){ f.logoUrl=e.target.result; flights.push(f); saveAndRender(); }
+    reader.readAsDataURL(fileLogo);
+  } else {
+    flights.push(f);
+    saveAndRender();
+  }
+
+  if(fileAnn){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      f.announcementFile=e.target.result;
+      saveAndRender();
+    }
+    reader.readAsDataURL(fileAnn);
+  }
+
+  document.getElementById('code').value='';
+  document.getElementById('dest').value='';
+  document.getElementById('time').value='';
+  document.getElementById('gate').value='';
+  document.getElementById('status').value='On Time';
+  document.getElementById('cpt').value='';
+  document.getElementById('fo').value='';
+  document.getElementById('training').value='Ne';
+  document.getElementById('logoUrl').value='';
+  document.getElementById('logoFile').value='';
+  document.getElementById('announcement').value='';
+  document.getElementById('announcementFile').value='';
+};
+
+document.getElementById('clear').onclick=()=>{
+  if(confirm('Opravdu vymazat všechny lety?')){
+    flights=[];
+    saveAndRender();
+  }
+};
+
+document.getElementById('openBoard').onclick=()=>{
+  boardWin=window.open('board.html','board','width=1200,height=800');
+  setTimeout(updateBoard,1000);
+};
+
+renderList();
+</script>
+</body>
+</html>
