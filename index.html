@@ -98,10 +98,13 @@ function renderBoard(){
     const logoTd = document.createElement('td');
     logoTd.className = 'logoCell';
 
-    if (f.logoUrl){
+    if (f.logoUrl && f.logoUrl.trim() !== '') {
       const img = document.createElement('img');
       img.src = f.logoUrl;
       img.alt = 'Operator logo';
+      img.onerror = () => {
+        logoTd.textContent = '⚠️';
+      };
       logoTd.appendChild(img);
     } else {
       logoTd.textContent = '—';
