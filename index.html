@@ -1,140 +1,75 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<meta charset="UTF-8">
-<title>SCHEDULE</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
-<style>
-body {
-  margin:0;
-  background:#0a1a2f;
-  color:#e0f7ff;
-  font-family:'Nunito', sans-serif;
-  overflow:hidden;
-}
-header {
-  text-align:center;
-  padding:10px;
-  font-size:2em;
-  color:#a8d0e6;
-  border-bottom:2px solid #1f2f4f;
-}
-#clock {
-  position:absolute;
-  top:10px;
-  right:20px;
-  font-size:1.5em;
-}
-table {
-  width:100%;
-  border-collapse: collapse;
-  margin-top:10px;
-}
-th, td {
-  padding:10px;
-  text-align:left;
-}
-th {
-  font-size:1.2em;
-  border-bottom:2px solid #1f2f4f;
-}
-td {
-  font-size:1.1em;
-  border-bottom:1px solid #1f2f4f;
-}
-.logoCell img {
-  max-height:50px;
-  max-width:100px;
-  object-fit:contain;
-}
-.flip {
-  animation: flipAnim 0.5s ease;
-}
-@keyframes flipAnim {
-  0% { opacity:0; transform: rotateX(90deg);}
-  100% { opacity:1; transform: rotateX(0deg);}
-}
-td.status[data-status="Boarding"] { color:#ffe066; }
-td.status[data-status="Delayed"] { color:#ffa500; }
-td.status[data-status="Departed"] { color:#999; }
-td.status[data-status="On Time"] { color:#51cf66; }
-td.status[data-status="Zrušeno"] { color:#ff4d4d; }
-</style>
-</head>
-<body>
-<header>SCHEDULE</header>
-<div id="clock"></div>
-<table>
-<thead>
-<tr>
-<th>Operator</th>
-<th>Čas</th>
-<th>Let</th>
-<th>Destinace</th>
-<th>Brána</th>
-<th>CPT</th>
-<th>FO</th>
-<th>Training</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+  <meta charset="UTF-8">
+  <title>Tabule letů</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #0a1a2f; color: #e0f7ff; margin: 0; padding: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #1f2f4f; }
+    th { background: #112a45; }
+    .logoCell img { max-height: 40px; max-width: 80px; object-fit: contain; }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-let flights = [];
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEGN_sh6SpoBX8eSVT07_j-R9YJ3UPnGo",
+      authDomain: "tabuleletu.firebaseapp.com",
+      projectId: "tabuleletu",
+      storageBucket: "tabuleletu.firebasestorage.app",
+      messagingSenderId: "257556892965",
+      appId: "1:257556892965:web:e7a1e8c9127f95879c9ecc",
+      measurementId: "G-V2VNM18Q3G"
+    };
 
-function updateClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString();
-}
-setInterval(updateClock, 1000);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-function renderBoard(){
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  flights.forEach(f => {
-    const tr = document.createElement('tr');
-    const logoTd = document.createElement('td');
-    logoTd.className = 'logoCell';
-
-    if (f.logoUrl && f.logoUrl.trim() !== '') {
-      const img = document.createElement('img');
-      img.src = f.logoUrl;
-      img.alt = 'Operator logo';
-      img.onerror = () => {
-        logoTd.textContent = '⚠️';
-      };
-      logoTd.appendChild(img);
-    } else {
-      logoTd.textContent = '—';
-    }
-    tr.appendChild(logoTd);
-
-    ['time','code','dest','gate','cpt','fo','training'].forEach(field => {
-      const td = document.createElement('td');
-      td.textContent = f[field] || '';
-      td.classList.add('flip');
-      tr.appendChild(td);
+    const tbody = document.createElement('tbody');
+    document.addEventListener("DOMContentLoaded", () => {
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Operator</th><th>Čas</th><th>Let</th><th>Destinace</th><th>Brána</th><th>CPT</th><th>FO</th><th>Training</th><th>Status</th>
+          </tr>
+        </thead>
+      `;
+      table.appendChild(tbody);
+      document.body.appendChild(table);
     });
 
-    const statusTd = document.createElement('td');
-    statusTd.textContent = f.status || '';
-    statusTd.className = 'status flip';
-    statusTd.setAttribute('data-status', f.status);
-    tr.appendChild(statusTd);
-
-    tbody.appendChild(tr);
-  });
-}
-
-function loadFlights(){
-  flights = JSON.parse(localStorage.getItem('flights') || '[]');
-  renderBoard();
-}
-
-setInterval(loadFlights, 10000); // aktualizace každých 10 sekund
-loadFlights();
-</script>
+    onSnapshot(collection(db, "flights"), (snapshot) => {
+      tbody.innerHTML = '';
+      snapshot.forEach(doc => {
+        const f = doc.data();
+        const tr = document.createElement('tr');
+        const logoTd = document.createElement('td');
+        logoTd.className = 'logoCell';
+        if (f.logoUrl && f.logoUrl.trim() !== '') {
+          const img = document.createElement('img');
+          img.src = f.logoUrl;
+          img.alt = 'Logo';
+          img.onerror = () => { logoTd.textContent = '⚠️'; };
+          logoTd.appendChild(img);
+        } else {
+          logoTd.textContent = '—';
+        }
+        tr.appendChild(logoTd);
+        ['time','code','dest','gate','cpt','fo','training','status'].forEach(field => {
+          const td = document.createElement('td');
+          td.textContent = f[field] || '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Tabule letů</h1>
 </body>
 </html>
