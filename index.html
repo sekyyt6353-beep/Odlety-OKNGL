@@ -81,6 +81,49 @@ td.status[data-status="Zrušeno"] { color:#ff4d4d; }
 </table>
 
 <script>
+let flights = [];
+
 function updateClock(){
   const now = new Date();
-  document.getElementById('clock').textContent
+  document.getElementById('clock').textContent = now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+
+function renderBoard(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  flights.forEach(f => {
+    const tr = document.createElement('tr');
+    const logoTd = document.createElement('td');
+    logoTd.className = 'logoCell';
+    if(f.logoUrl){
+      const img = document.createElement('img');
+      img.src = f.logoUrl;
+      logoTd.appendChild(img);
+    }
+    tr.appendChild(logoTd);
+    ['time','code','dest','gate','cpt','fo','training'].forEach(field => {
+      const td = document.createElement('td');
+      td.textContent = f[field];
+      td.classList.add('flip');
+      tr.appendChild(td);
+    });
+    const statusTd = document.createElement('td');
+    statusTd.textContent = f.status;
+    statusTd.className = 'status flip';
+    statusTd.setAttribute('data-status', f.status);
+    tr.appendChild(statusTd);
+    tbody.appendChild(tr);
+  });
+}
+
+function loadFlights(){
+  flights = JSON.parse(localStorage.getItem('flights') || '[]');
+  renderBoard();
+}
+
+setInterval(loadFlights, 3000);
+loadFlights();
+</script>
+</body>
+</html>
