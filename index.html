@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>OK-NGL B737 TIMETABLE</title>
+<title>SCHEDULE</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
 <style>
 body {
@@ -54,18 +54,19 @@ td {
   100% { opacity:1; transform: rotateX(0deg);}
 }
 td.status[data-status="Boarding"] { color:#ffe066; }
-td.status[data-status="Delayed"] { color:#ff6b6b; }
+td.status[data-status="Delayed"] { color:#ffa500; }
 td.status[data-status="Departed"] { color:#999; }
 td.status[data-status="On Time"] { color:#51cf66; }
+td.status[data-status="Zrušeno"] { color:#ff4d4d; }
 </style>
 </head>
 <body>
-<header>OK-NGL B737 TIMETABLE</header>
+<header>SCHEDULE</header>
 <div id="clock"></div>
 <table>
 <thead>
 <tr>
-<th>Operator</th>
+<th>Logo</th>
 <th>Čas</th>
 <th>Let</th>
 <th>Destinace</th>
@@ -79,22 +80,7 @@ td.status[data-status="On Time"] { color:#51cf66; }
 <tbody id="tbody"></tbody>
 </table>
 
-<audio id="announcementAudio"></audio>
-
 <script>
-let flights = JSON.parse(localStorage.getItem('flights') || '[]');
-let soundFlip = false;
-let currentIndex = 0;
-const visibleRows = 8;
-const tbody = document.getElementById('tbody');
-const audioEl = document.getElementById('announcementAudio');
-
-// 🕒 Hodiny
-function updateClock() {
+function updateClock(){
   const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('cs-CZ', { hour12:false });
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// 🔊 Z
+  document.getElementById('clock').textContent
