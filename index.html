@@ -96,23 +96,28 @@ function renderBoard(){
     const tr = document.createElement('tr');
     const logoTd = document.createElement('td');
     logoTd.className = 'logoCell';
-    if(f.logoUrl){
+    if(f.logoUrl && f.logoUrl.startsWith('data:image')){
       const img = document.createElement('img');
       img.src = f.logoUrl;
       logoTd.appendChild(img);
+    } else {
+      logoTd.textContent = '—';
     }
     tr.appendChild(logoTd);
+
     ['time','code','dest','gate','cpt','fo','training'].forEach(field => {
       const td = document.createElement('td');
-      td.textContent = f[field];
+      td.textContent = f[field] || '';
       td.classList.add('flip');
       tr.appendChild(td);
     });
+
     const statusTd = document.createElement('td');
-    statusTd.textContent = f.status;
+    statusTd.textContent = f.status || '';
     statusTd.className = 'status flip';
     statusTd.setAttribute('data-status', f.status);
     tr.appendChild(statusTd);
+
     tbody.appendChild(tr);
   });
 }
