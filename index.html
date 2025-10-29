@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>SCHEDULE</title>
+<title>OK-NGL B737 TIMETABLE</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
 <style>
 body {
@@ -60,7 +60,7 @@ td.status[data-status="On Time"] { color:#51cf66; }
 </style>
 </head>
 <body>
-<header>SCHEDULE</header>
+<header>OK-NGL B737 TIMETABLE</header>
 <div id="clock"></div>
 <table>
 <thead>
@@ -79,71 +79,22 @@ td.status[data-status="On Time"] { color:#51cf66; }
 <tbody id="tbody"></tbody>
 </table>
 
+<audio id="announcementAudio"></audio>
+
 <script>
-let flights=[];
-let soundFlip=false;
-let currentIndex=0;
-const visibleRows=8;
+let flights = JSON.parse(localStorage.getItem('flights') || '[]');
+let soundFlip = false;
+let currentIndex = 0;
+const visibleRows = 8;
+const tbody = document.getElementById('tbody');
+const audioEl = document.getElementById('announcementAudio');
 
-function updateClock(){
-  const now=new Date();
-  document.getElementById('clock').textContent=now.toLocaleTimeString();
+// 🕒 Hodiny
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('cs-CZ', { hour12:false });
 }
-setInterval(updateClock,1000);
+setInterval(updateClock, 1000);
+updateClock();
 
-function playStatusSound(status){
-  let sound;
-  if(status === "Boarding") sound = new Audio("boarding.mp3");
-  else if(status === "Delayed") sound = new Audio("delayed.mp3");
-  if(sound) sound.play();
-}
-
-function renderBoard(){
-  const tbody=document.getElementById('tbody');
-  tbody.innerHTML='';
-  if(flights.length===0) return;
-  const rows=flights.slice(currentIndex,currentIndex+visibleRows);
-  rows.forEach(f=>{
-    const tr=document.createElement('tr');
-    const logoTd=document.createElement('td'); logoTd.className='logoCell';
-    if(f.logoUrl){ const img=document.createElement('img'); img.src=f.logoUrl; logoTd.appendChild(img);}
-    tr.appendChild(logoTd);
-    ['time','code','dest','gate','cpt','fo','training'].forEach(field=>{
-      const td=document.createElement('td');
-      td.textContent=f[field];
-      td.classList.add('flip');
-      tr.appendChild(td);
-    });
-    const statusTd=document.createElement('td');
-    statusTd.textContent=f.status;
-    statusTd.className='status flip';
-    statusTd.setAttribute('data-status',f.status);
-    tr.appendChild(statusTd);
-    tbody.appendChild(tr);
-    if(soundFlip) playStatusSound(f.status);
-  });
-  if(soundFlip){
-    const flipSound=new Audio("flip.mp3");
-    flipSound.play();
-  }
-}
-
-function rotateFlights(){
-  if(flights.length>visibleRows){
-    currentIndex=(currentIndex+visibleRows)%flights.length;
-    renderBoard();
-  }
-}
-setInterval(rotateFlights,5000);
-
-window.addEventListener('message',e=>{
-  if(e.data.type==='update'){
-    flights=e.data.flights.map(f=>({...f}));
-    soundFlip=e.data.soundFlip;
-    currentIndex=0;
-    renderBoard();
-  }
-});
-</script>
-</body>
-</html>
+// 🔊 Z
