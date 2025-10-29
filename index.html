@@ -45,6 +45,7 @@ td {
 .logoCell img {
   max-height:50px;
   max-width:100px;
+  object-fit:contain;
 }
 .flip {
   animation: flipAnim 0.5s ease;
@@ -96,9 +97,11 @@ function renderBoard(){
     const tr = document.createElement('tr');
     const logoTd = document.createElement('td');
     logoTd.className = 'logoCell';
-    if(f.logoUrl && f.logoUrl.startsWith('data:image')){
+
+    if (f.logoUrl){
       const img = document.createElement('img');
       img.src = f.logoUrl;
+      img.alt = 'Operator logo';
       logoTd.appendChild(img);
     } else {
       logoTd.textContent = '—';
@@ -127,7 +130,7 @@ function loadFlights(){
   renderBoard();
 }
 
-setInterval(loadFlights, 10000);
+setInterval(loadFlights, 10000); // aktualizace každých 10 sekund
 loadFlights();
 </script>
 </body>
