@@ -1,132 +1,147 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<meta charset="UTF-8">
-<title>SCHEDULE</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
-<style>
-body {
-  margin:0;
-  background:#0a1a2f;
-  color:#e0f7ff;
-  font-family:'Nunito', sans-serif;
-}
-header {
-  text-align:center;
-  padding:10px;
-  font-size:2em;
-  color:#a8d0e6;
-  border-bottom:2px solid #1f2f4f;
-}
-#clock {
-  position:absolute;
-  top:10px;
-  right:20px;
-  font-size:1.5em;
-}
-table {
-  width:100%;
-  border-collapse: collapse;
-  margin-top:10px;
-}
-th, td {
-  padding:10px;
-  text-align:left;
-}
-th {
-  font-size:1.2em;
-  border-bottom:2px solid #1f2f4f;
-}
-td {
-  font-size:1.1em;
-  border-bottom:1px solid #1f2f4f;
-}
-.logoCell img {
-  max-height:50px;
-  max-width:100px;
-  object-fit:contain;
-}
-td.status[data-status="Boarding"] { color:#ffe066; }
-td.status[data-status="Delayed"] { color:#ffa500; }
-td.status[data-status="Departed"] { color:#999; }
-td.status[data-status="On Time"] { color:#51cf66; }
-td.status[data-status="Zrušeno"] { color:#ff4d4d; }
-</style>
+  <meta charset="UTF-8">
+  <title>Tabule letů</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      margin:0;
+      background:#0a1a2f;
+      color:#e0f7ff;
+      font-family:'Segoe UI', sans-serif;
+    }
+    header {
+      text-align:center;
+      padding:10px;
+      font-size:2em;
+      color:#a8d0e6;
+      border-bottom:2px solid #1f2f4f;
+    }
+    #clock {
+      position:absolute;
+      top:10px;
+      right:20px;
+      font-size:1.5em;
+    }
+    table {
+      width:100%;
+      border-collapse: collapse;
+      margin-top:10px;
+    }
+    th, td {
+      padding:10px;
+      text-align:left;
+    }
+    th {
+      font-size:1.2em;
+      border-bottom:2px solid #1f2f4f;
+    }
+    td {
+      font-size:1.1em;
+      border-bottom:1px solid #1f2f4f;
+    }
+    .logoCell img {
+      max-height:50px;
+      max-width:100px;
+      object-fit:contain;
+    }
+    td.status[data-status="Boarding"] { color:#ffe066; }
+    td.status[data-status="Delayed"] { color:#ffa500; }
+    td.status[data-status="Departed"] { color:#999; }
+    td.status[data-status="On Time"] { color:#51cf66; }
+    td.status[data-status="Zrušeno"] { color:#ff4d4d; }
+    #downloadBtn {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #51cf66;
+      color: #0a1a2f;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #downloadBtn:hover {
+      background: #40b656;
+    }
+  </style>
 </head>
 <body>
-<header>SCHEDULE</header>
-<div id="clock"></div>
-<table>
-<thead>
-<tr>
-<th>Operator</th>
-<th>Čas</th>
-<th>Let</th>
-<th>Destinace</th>
-<th>Brána</th>
-<th>CPT</th>
-<th>FO</th>
-<th>Training</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+  <header>Tabule letů</header>
+  <div id="clock"></div>
+  <button id="downloadBtn" onclick="downloadBoard()">Stáhnout jako obrázek</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Operator</th>
+        <th>Datum</th>
+        <th>Čas</th>
+        <th>Let</th>
+        <th>Destinace</th>
+        <th>Brána</th>
+        <th>CPT</th>
+        <th>FO</th>
+        <th>Training</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
 
-<script>
-let flights = [];
-
-function updateClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString();
-}
-setInterval(updateClock, 1000);
-
-function renderBoard(){
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  flights.forEach(f => {
-    const tr = document.createElement('tr');
-    const logoTd = document.createElement('td');
-    logoTd.className = 'logoCell';
-
-    if (f.logoUrl && f.logoUrl.trim() !== '') {
-      const img = document.createElement('img');
-      img.src = f.logoUrl;
-      img.alt = 'Operator logo';
-      img.onerror = () => {
-        logoTd.textContent = '⚠️';
-      };
-      logoTd.appendChild(img);
-    } else {
-      logoTd.textContent = '—';
+  <script>
+    function updateClock(){
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString();
     }
-    tr.appendChild(logoTd);
+    setInterval(updateClock, 1000);
 
-    ['time','code','dest','gate','cpt','fo','training'].forEach(field => {
-      const td = document.createElement('td');
-      td.textContent = f[field] || '';
-      tr.appendChild(td);
-    });
+    function renderBoard(){
+      const tbody = document.getElementById('tbody');
+      const flights = JSON.parse(localStorage.getItem('flights') || '[]');
+      tbody.innerHTML = '';
+      flights.forEach(f => {
+        const tr = document.createElement('tr');
+        const logoTd = document.createElement('td');
+        logoTd.className = 'logoCell';
+        if (f.logoUrl && f.logoUrl.trim() !== '') {
+          const img = document.createElement('img');
+          img.src = f.logoUrl;
+          img.alt = 'Logo';
+          img.onerror = () => { logoTd.textContent = '⚠️'; };
+          logoTd.appendChild(img);
+        } else {
+          logoTd.textContent = '—';
+        }
+        tr.appendChild(logoTd);
 
-    const statusTd = document.createElement('td');
-    statusTd.textContent = f.status || '';
-    statusTd.className = 'status';
-    statusTd.setAttribute('data-status', f.status);
-    tr.appendChild(statusTd);
+        ['date','time','code','dest','gate','cpt','fo','training'].forEach(field => {
+          const td = document.createElement('td');
+          td.textContent = f[field] || '';
+          tr.appendChild(td);
+        });
 
-    tbody.appendChild(tr);
-  });
-}
+        const statusTd = document.createElement('td');
+        statusTd.textContent = f.status || '';
+        statusTd.className = 'status';
+        statusTd.setAttribute('data-status', f.status);
+        tr.appendChild(statusTd);
 
-function loadFlights(){
-  flights = JSON.parse(localStorage.getItem('flights') || '[]');
-  renderBoard();
-}
+        tbody.appendChild(tr);
+      });
+    }
 
-setInterval(loadFlights, 10000); // aktualizace každých 10 sekund
-loadFlights();
-</script>
+    function downloadBoard() {
+      html2canvas(document.body).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'tabule.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    setInterval(renderBoard, 10000);
+    renderBoard();
+  </script>
 </body>
 </html>
